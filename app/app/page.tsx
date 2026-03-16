@@ -9,8 +9,8 @@ export default function AppHomePage() {
   return (
     <>
       <Topbar
-        title="Visão geral da REDE"
-        subtitle="Módulos disponíveis para esta primeira entrega da plataforma."
+        title="Painel de coordenação humanitária"
+        subtitle="Módulos ativos para cadastro, acompanhamento e coordenação de ações humanitárias."
       />
 
       <div className="page-card mb-4">

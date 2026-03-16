@@ -122,3 +122,40 @@ export const tiposBeneficio = [
   { value: 'material_construcao', label: 'Material de construção' },
   { value: 'outros', label: 'Outros' },
 ]
+
+export const centrosDistribuicao = [
+  { value: 'Centro JF Norte', label: 'Centro JF Norte' },
+  { value: 'Centro JF Sul', label: 'Centro JF Sul' },
+  { value: 'Centro Regional 1', label: 'Centro Regional 1' },
+  { value: 'Centro Regional 2', label: 'Centro Regional 2' },
+  { value: 'Abrigo Temporário 1', label: 'Abrigo Temporário 1' },
+  { value: 'Abrigo Temporário 2', label: 'Abrigo Temporário 2' },
+]
+
+export const tiposDoador = [
+  { value: 'pessoa_fisica', label: 'Pessoa física' },
+  { value: 'empresa', label: 'Empresa' },
+  { value: 'ong', label: 'ONG' },
+  { value: 'instituicao_publica', label: 'Instituição pública' },
+  { value: 'outros', label: 'Outros' },
+]
+
+export const categoriasItem = [
+  { value: 'alimentos', label: 'Alimentos' },
+  { value: 'agua', label: 'Água' },
+  { value: 'higiene', label: 'Higiene' },
+  { value: 'limpeza', label: 'Limpeza' },
+  { value: 'roupas', label: 'Roupas' },
+  { value: 'cobertores', label: 'Cobertores' },
+  { value: 'medicamentos', label: 'Medicamentos' },
+  { value: 'outros', label: 'Outros' },
+]
+
+export const unidadesMedida = [
+  { value: 'unidade', label: 'Unidade' },
+  { value: 'caixa', label: 'Caixa' },
+  { value: 'kit', label: 'Kit' },
+  { value: 'pacote', label: 'Pacote' },
+  { value: 'kg', label: 'Kg' },
+  { value: 'litro', label: 'Litro' },
+]

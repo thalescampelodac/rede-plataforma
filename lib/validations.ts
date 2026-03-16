@@ -562,3 +562,286 @@ export function validateBeneficio(data: BeneficioInput) {
     },
   }
 }
+
+export type DoacaoInput = {
+  data_recebimento: string
+  centro_distribuicao: string
+  estado: string
+  municipio: string
+  origem_doacao?: string
+  tipo_doador: string
+  cpf_cnpj_doador?: string
+  categoria_item: string
+  nome_item: string
+  quantidade: string | number
+  unidade_medida: string
+  data_validade?: string | null
+  observacoes?: string
+}
+
+export function validateDoacao(data: DoacaoInput) {
+  const errors: Record<string, string> = {}
+
+  if (!data.data_recebimento?.trim()) {
+    errors.data_recebimento = 'Informe a data de recebimento.'
+  }
+
+  if (!data.centro_distribuicao?.trim()) {
+    errors.centro_distribuicao = 'Selecione o centro de distribuição.'
+  }
+
+  if (!data.estado?.trim() || data.estado.trim().length !== 2) {
+    errors.estado = 'UF inválida.'
+  }
+
+  if (!data.municipio?.trim()) {
+    errors.municipio = 'Município é obrigatório.'
+  }
+
+  if (!data.tipo_doador?.trim()) {
+    errors.tipo_doador = 'Selecione o tipo de doador.'
+  }
+
+  if (!data.categoria_item?.trim()) {
+    errors.categoria_item = 'Selecione a categoria do item.'
+  }
+
+  if (!data.nome_item?.trim()) {
+    errors.nome_item = 'Informe o nome do item.'
+  }
+
+  const quantidade = Number(data.quantidade ?? 0)
+  if (Number.isNaN(quantidade) || quantidade <= 0) {
+    errors.quantidade = 'Quantidade inválida.'
+  }
+
+  if (!data.unidade_medida?.trim()) {
+    errors.unidade_medida = 'Selecione a unidade de medida.'
+  }
+
+  const cpfCnpj = onlyDigits(data.cpf_cnpj_doador || '')
+  if (cpfCnpj && cpfCnpj.length !== 11 && cpfCnpj.length !== 14) {
+    errors.cpf_cnpj_doador = 'CPF/CNPJ inválido.'
+  }
+
+  return {
+    valid: Object.keys(errors).length === 0,
+    errors,
+    normalized: {
+      data_recebimento: data.data_recebimento,
+      centro_distribuicao: data.centro_distribuicao,
+      estado: data.estado.trim().toUpperCase(),
+      municipio: data.municipio.trim(),
+      origem_doacao: data.origem_doacao?.trim() || null,
+      tipo_doador: data.tipo_doador,
+      cpf_cnpj_doador: cpfCnpj || null,
+      categoria_item: data.categoria_item,
+      nome_item: data.nome_item.trim(),
+      quantidade,
+      unidade_medida: data.unidade_medida,
+      data_validade: data.data_validade?.trim() || null,
+      observacoes: data.observacoes?.trim() || null,
+    },
+  }
+}
+
+export type EstoqueInput = {
+  centro_distribuicao: string
+  estado: string
+  municipio: string
+  categoria_item: string
+  nome_item: string
+  quantidade_estoque: string | number
+  unidade: string
+  data_entrada: string
+  data_validade?: string | null
+  localizacao_estoque?: string
+  observacoes?: string
+}
+
+export function validateEstoque(data: EstoqueInput) {
+  const errors: Record<string, string> = {}
+
+  if (!data.centro_distribuicao?.trim()) {
+    errors.centro_distribuicao = 'Selecione o centro de distribuição.'
+  }
+
+  if (!data.estado?.trim() || data.estado.trim().length !== 2) {
+    errors.estado = 'UF inválida.'
+  }
+
+  if (!data.municipio?.trim()) {
+    errors.municipio = 'Município é obrigatório.'
+  }
+
+  if (!data.categoria_item?.trim()) {
+    errors.categoria_item = 'Selecione a categoria do item.'
+  }
+
+  if (!data.nome_item?.trim()) {
+    errors.nome_item = 'Informe o nome do item.'
+  }
+
+  const quantidade_estoque = Number(data.quantidade_estoque ?? 0)
+  if (Number.isNaN(quantidade_estoque) || quantidade_estoque < 0) {
+    errors.quantidade_estoque = 'Quantidade em estoque inválida.'
+  }
+
+  if (!data.unidade?.trim()) {
+    errors.unidade = 'Selecione a unidade.'
+  }
+
+  if (!data.data_entrada?.trim()) {
+    errors.data_entrada = 'Informe a data de entrada.'
+  }
+
+  return {
+    valid: Object.keys(errors).length === 0,
+    errors,
+    normalized: {
+      centro_distribuicao: data.centro_distribuicao,
+      estado: data.estado.trim().toUpperCase(),
+      municipio: data.municipio.trim(),
+      categoria_item: data.categoria_item,
+      nome_item: data.nome_item.trim(),
+      quantidade_estoque,
+      unidade: data.unidade,
+      data_entrada: data.data_entrada,
+      data_validade: data.data_validade?.trim() || null,
+      localizacao_estoque: data.localizacao_estoque?.trim() || null,
+      observacoes: data.observacoes?.trim() || null,
+    },
+  }
+}
+
+export type EntregaInput = {
+  familia_id: string
+  centro_distribuicao: string
+  responsavel_entrega: string
+  data_entrega: string
+  nome_item: string
+  categoria_item: string
+  quantidade: string | number
+  assinatura_digital?: string
+  foto_entrega?: string
+  observacoes?: string
+}
+
+export function validateEntrega(data: EntregaInput) {
+  const errors: Record<string, string> = {}
+
+  if (!data.familia_id?.trim()) {
+    errors.familia_id = 'Selecione a família.'
+  }
+
+  if (!data.centro_distribuicao?.trim()) {
+    errors.centro_distribuicao = 'Selecione o centro de distribuição.'
+  }
+
+  if (!data.responsavel_entrega?.trim() || data.responsavel_entrega.trim().length < 3) {
+    errors.responsavel_entrega = 'Informe o responsável pela entrega.'
+  }
+
+  if (!data.data_entrega?.trim()) {
+    errors.data_entrega = 'Informe a data da entrega.'
+  }
+
+  if (!data.nome_item?.trim()) {
+    errors.nome_item = 'Informe o nome do item.'
+  }
+
+  if (!data.categoria_item?.trim()) {
+    errors.categoria_item = 'Selecione a categoria.'
+  }
+
+  const quantidade = Number(data.quantidade ?? 0)
+  if (Number.isNaN(quantidade) || quantidade <= 0) {
+    errors.quantidade = 'Quantidade inválida.'
+  }
+
+  return {
+    valid: Object.keys(errors).length === 0,
+    errors,
+    normalized: {
+      familia_id: data.familia_id,
+      centro_distribuicao: data.centro_distribuicao,
+      responsavel_entrega: data.responsavel_entrega.trim(),
+      data_entrega: data.data_entrega,
+      nome_item: data.nome_item.trim(),
+      categoria_item: data.categoria_item,
+      quantidade,
+      assinatura_digital: data.assinatura_digital?.trim() || null,
+      foto_entrega: data.foto_entrega?.trim() || null,
+      observacoes: data.observacoes?.trim() || null,
+    },
+  }
+}
+
+export type TransferenciaInput = {
+  centro_origem: string
+  centro_destino: string
+  data_transferencia: string
+  nome_item: string
+  categoria_item: string
+  quantidade: string | number
+  unidade: string
+  responsavel_envio: string
+  responsavel_recebimento?: string
+  status_transferencia: string
+  observacoes?: string
+}
+
+export function validateTransferencia(data: TransferenciaInput) {
+  const errors: Record<string, string> = {}
+
+  if (!data.centro_origem?.trim()) {
+    errors.centro_origem = 'Selecione o centro de origem.'
+  }
+
+  if (!data.centro_destino?.trim()) {
+    errors.centro_destino = 'Selecione o centro de destino.'
+  }
+
+  if (!data.data_transferencia?.trim()) {
+    errors.data_transferencia = 'Informe a data da transferência.'
+  }
+
+  if (!data.nome_item?.trim()) {
+    errors.nome_item = 'Informe o item.'
+  }
+
+  if (!data.categoria_item?.trim()) {
+    errors.categoria_item = 'Selecione a categoria.'
+  }
+
+  const quantidade = Number(data.quantidade ?? 0)
+  if (Number.isNaN(quantidade) || quantidade <= 0) {
+    errors.quantidade = 'Quantidade inválida.'
+  }
+
+  if (!data.unidade?.trim()) {
+    errors.unidade = 'Selecione a unidade.'
+  }
+
+  if (!data.responsavel_envio?.trim()) {
+    errors.responsavel_envio = 'Informe o responsável pelo envio.'
+  }
+
+  return {
+    valid: Object.keys(errors).length === 0,
+    errors,
+    normalized: {
+      centro_origem: data.centro_origem,
+      centro_destino: data.centro_destino,
+      data_transferencia: data.data_transferencia,
+      nome_item: data.nome_item.trim(),
+      categoria_item: data.categoria_item,
+      quantidade,
+      unidade: data.unidade,
+      responsavel_envio: data.responsavel_envio.trim(),
+      responsavel_recebimento: data.responsavel_recebimento?.trim() || null,
+      status_transferencia: data.status_transferencia,
+      observacoes: data.observacoes?.trim() || null,
+    },
+  }
+}

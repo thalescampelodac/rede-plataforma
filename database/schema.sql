@@ -269,3 +269,199 @@ execute function public.set_updated_at_beneficios();
 create index idx_beneficios_familia on beneficios_por_familia(familia_id);
 create index idx_beneficios_programa on beneficios_por_familia(programa_id);
 create index idx_beneficios_tipo on beneficios_por_familia(tipo_beneficio);
+
+--------------------------------------------------------------------------------
+--           doacoes_recebidas
+--------------------------------------------------------------------------------
+
+create table if not exists public.doacoes_recebidas (
+  id uuid primary key default gen_random_uuid(),
+
+  data_recebimento date not null,
+  centro_distribuicao text not null,
+  estado char(2) not null,
+  municipio text not null,
+
+  origem_doacao text,
+  tipo_doador text not null,
+  cpf_cnpj_doador varchar(14),
+
+  categoria_item text not null,
+  nome_item text not null,
+  quantidade numeric(12,2) not null default 0,
+  unidade_medida text not null,
+
+  data_validade date,
+  observacoes text,
+
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
+);
+
+create or replace function public.set_updated_at_doacoes()
+returns trigger
+language plpgsql
+as $$
+begin
+  new.updated_at = now();
+  return new;
+end;
+$$;
+
+drop trigger if exists trg_doacoes_updated_at on public.doacoes_recebidas;
+
+create trigger trg_doacoes_updated_at
+before update on public.doacoes_recebidas
+for each row
+execute function public.set_updated_at_doacoes();
+
+create index idx_doacoes_centro on doacoes_recebidas(centro_distribuicao);
+create index idx_doacoes_item on doacoes_recebidas(nome_item);
+create index idx_doacoes_categoria on doacoes_recebidas(categoria_item);
+create index idx_doacoes_municipio on doacoes_recebidas(municipio);
+
+--------------------------------------------------------------------------------
+--           estoque_humanitario
+--------------------------------------------------------------------------------
+
+create table if not exists public.estoque_humanitario (
+  id uuid primary key default gen_random_uuid(),
+
+  centro_distribuicao text not null,
+  estado char(2) not null,
+  municipio text not null,
+
+  categoria_item text not null,
+  nome_item text not null,
+  quantidade_estoque numeric(12,2) not null default 0,
+  unidade text not null,
+
+  data_entrada date not null,
+  data_validade date,
+  localizacao_estoque text,
+  observacoes text,
+
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
+);
+
+create or replace function public.set_updated_at_estoque()
+returns trigger
+language plpgsql
+as $$
+begin
+  new.updated_at = now();
+  return new;
+end;
+$$;
+
+drop trigger if exists trg_estoque_updated_at on public.estoque_humanitario;
+
+create trigger trg_estoque_updated_at
+before update on public.estoque_humanitario
+for each row
+execute function public.set_updated_at_estoque();
+
+create index idx_estoque_centro on estoque_humanitario(centro_distribuicao);
+create index idx_estoque_item on estoque_humanitario(nome_item);
+create index idx_estoque_categoria on estoque_humanitario(categoria_item);
+create index idx_estoque_municipio on estoque_humanitario(municipio);
+
+--------------------------------------------------------------------------------
+--           entregas_familias
+--------------------------------------------------------------------------------
+
+create table if not exists public.entregas_familias (
+  id uuid primary key default gen_random_uuid(),
+
+  familia_id uuid not null references public.familias_atingidas(id) on delete cascade,
+
+  centro_distribuicao text not null,
+  responsavel_entrega text not null,
+  data_entrega date not null,
+
+  nome_item text not null,
+  categoria_item text not null,
+  quantidade numeric(12,2) not null default 0,
+
+  assinatura_digital text,
+  foto_entrega text,
+  observacoes text,
+
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
+);
+
+create or replace function public.set_updated_at_entregas()
+returns trigger
+language plpgsql
+as $$
+begin
+  new.updated_at = now();
+  return new;
+end;
+$$;
+
+drop trigger if exists trg_entregas_updated_at on public.entregas_familias;
+
+create trigger trg_entregas_updated_at
+before update on public.entregas_familias
+for each row
+execute function public.set_updated_at_entregas();
+
+create index idx_entregas_familia on entregas_familias(familia_id);
+create index idx_entregas_centro on entregas_familias(centro_distribuicao);
+create index idx_entregas_item on entregas_familias(nome_item);
+
+--------------------------------------------------------------------------------
+--           transferencias_centros
+--------------------------------------------------------------------------------
+
+create table if not exists public.transferencias_centros (
+  id uuid primary key default gen_random_uuid(),
+
+  centro_origem text not null,
+  centro_destino text not null,
+
+  data_transferencia date not null,
+
+  nome_item text not null,
+  categoria_item text not null,
+  quantidade numeric(12,2) not null default 0,
+  unidade text not null,
+
+  responsavel_envio text not null,
+  responsavel_recebimento text,
+
+  status_transferencia text not null default 'enviado',
+
+  observacoes text,
+
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
+);
+
+create or replace function public.set_updated_at_transferencias()
+returns trigger
+language plpgsql
+as $$
+begin
+  new.updated_at = now();
+  return new;
+end;
+$$;
+
+drop trigger if exists trg_transferencias_updated_at on public.transferencias_centros;
+
+create trigger trg_transferencias_updated_at
+before update on public.transferencias_centros
+for each row
+execute function public.set_updated_at_transferencias();
+
+create index idx_transferencias_origem on transferencias_centros(centro_origem);
+create index idx_transferencias_destino on transferencias_centros(centro_destino);
+create index idx_transferencias_item on transferencias_centros(nome_item);
+
+--------------------------------------------------------------------------------
+--           
+--------------------------------------------------------------------------------

@@ -456,3 +456,288 @@ from familias_atingidas f
 left join programas_governamentais p on p.nome_programa = 'Auxílio Reconstrução'
 where f.cpf = '12345678909'
 limit 1;
+
+insert into public.doacoes_recebidas
+(
+  data_recebimento,
+  centro_distribuicao,
+  estado,
+  municipio,
+  origem_doacao,
+  tipo_doador,
+  cpf_cnpj_doador,
+  categoria_item,
+  nome_item,
+  quantidade,
+  unidade_medida,
+  data_validade,
+  observacoes
+)
+values
+(
+  '2024-03-10',
+  'Centro JF Norte',
+  'MG',
+  'Juiz de Fora',
+  'Campanha local solidária',
+  'pessoa_fisica',
+  '52998224725',
+  'alimentos',
+  'Cesta básica',
+  50,
+  'unidade',
+  null,
+  'Doação recebida na triagem principal'
+),
+(
+  '2024-03-11',
+  'Centro Regional 1',
+  'MG',
+  'Belo Horizonte',
+  'Empresa parceira',
+  'empresa',
+  '11222333000181',
+  'agua',
+  'Água mineral 1,5L',
+  300,
+  'unidade',
+  '2025-01-10',
+  'Lote para distribuição imediata'
+),
+(
+  '2024-03-12',
+  'Abrigo Temporário 1',
+  'RJ',
+  'Petrópolis',
+  'Ação beneficente',
+  'ong',
+  null,
+  'higiene',
+  'Kit de higiene pessoal',
+  120,
+  'unidade',
+  null,
+  'Entrega feita por organização parceira'
+),
+(
+  '2024-03-13',
+  'Centro JF Sul',
+  'MG',
+  'Juiz de Fora',
+  'Rede de supermercados',
+  'empresa',
+  '22333444000190',
+  'limpeza',
+  'Água sanitária 1L',
+  80,
+  'unidade',
+  '2026-02-20',
+  'Material para apoio às equipes'
+);
+
+insert into public.estoque_humanitario
+(
+  centro_distribuicao,
+  estado,
+  municipio,
+  categoria_item,
+  nome_item,
+  quantidade_estoque,
+  unidade,
+  data_entrada,
+  data_validade,
+  localizacao_estoque,
+  observacoes
+)
+values
+(
+  'Centro JF Norte',
+  'MG',
+  'Juiz de Fora',
+  'alimentos',
+  'Cesta básica',
+  42,
+  'unidade',
+  '2024-03-10',
+  null,
+  'Prateleira A1',
+  'Saldo disponível após primeiras distribuições'
+),
+(
+  'Centro Regional 1',
+  'MG',
+  'Belo Horizonte',
+  'agua',
+  'Água mineral 1,5L',
+  240,
+  'unidade',
+  '2024-03-11',
+  '2025-01-10',
+  'Corredor B',
+  'Lote principal'
+),
+(
+  'Abrigo Temporário 1',
+  'RJ',
+  'Petrópolis',
+  'higiene',
+  'Kit de higiene pessoal',
+  95,
+  'unidade',
+  '2024-03-12',
+  null,
+  'Armário 2',
+  'Reservado para famílias recém-chegadas'
+),
+(
+  'Centro JF Sul',
+  'MG',
+  'Juiz de Fora',
+  'limpeza',
+  'Água sanitária 1L',
+  70,
+  'unidade',
+  '2024-03-13',
+  '2026-02-20',
+  'Setor limpeza',
+  'Uso operacional e apoio às famílias'
+);
+
+insert into public.entregas_familias
+(
+  familia_id,
+  centro_distribuicao,
+  responsavel_entrega,
+  data_entrega,
+  nome_item,
+  categoria_item,
+  quantidade,
+  assinatura_digital,
+  foto_entrega,
+  observacoes
+)
+select
+  f.id,
+  'Centro JF Norte',
+  'Carlos Henrique Mendes',
+  '2024-03-14',
+  'Cesta básica',
+  'alimentos',
+  1,
+  'assinatura_maria_aparecida',
+  null,
+  'Entrega inicial de apoio alimentar'
+from familias_atingidas f
+where f.cpf = '52998224725'
+limit 1;
+
+insert into public.entregas_familias
+(
+  familia_id,
+  centro_distribuicao,
+  responsavel_entrega,
+  data_entrega,
+  nome_item,
+  categoria_item,
+  quantidade,
+  assinatura_digital,
+  foto_entrega,
+  observacoes
+)
+select
+  f.id,
+  'Centro JF Sul',
+  'Patricia Gomes Ferreira',
+  '2024-03-15',
+  'Kit de higiene pessoal',
+  'higiene',
+  1,
+  'assinatura_joao_batista',
+  null,
+  'Entrega realizada no ponto de apoio'
+from familias_atingidas f
+where f.cpf = '11144477735'
+limit 1;
+
+insert into public.entregas_familias
+(
+  familia_id,
+  centro_distribuicao,
+  responsavel_entrega,
+  data_entrega,
+  nome_item,
+  categoria_item,
+  quantidade,
+  assinatura_digital,
+  foto_entrega,
+  observacoes
+)
+select
+  f.id,
+  'Abrigo Temporário 1',
+  'Rafael Almeida Costa',
+  '2024-03-16',
+  'Água mineral 1,5L',
+  'agua',
+  6,
+  'assinatura_ana_paula',
+  null,
+  'Entrega complementar para consumo imediato'
+from familias_atingidas f
+where f.cpf = '12345678909'
+limit 1;
+
+insert into public.transferencias_centros
+(
+  centro_origem,
+  centro_destino,
+  data_transferencia,
+  nome_item,
+  categoria_item,
+  quantidade,
+  unidade,
+  responsavel_envio,
+  responsavel_recebimento,
+  status_transferencia,
+  observacoes
+)
+values
+(
+  'Centro JF Norte',
+  'Abrigo Temporário 1',
+  '2024-03-17',
+  'Cesta básica',
+  'alimentos',
+  20,
+  'unidade',
+  'Carlos Mendes',
+  'Patricia Gomes',
+  'recebido',
+  'Transferência emergencial'
+),
+(
+  'Centro Regional 1',
+  'Centro JF Sul',
+  '2024-03-18',
+  'Água mineral 1,5L',
+  'agua',
+  100,
+  'unidade',
+  'Rafael Costa',
+  null,
+  'enviado',
+  'Reposição de estoque'
+),
+(
+  'Centro JF Sul',
+  'Abrigo Temporário 2',
+  '2024-03-19',
+  'Kit de higiene pessoal',
+  'higiene',
+  40,
+  'unidade',
+  'Patricia Gomes',
+  'João Batista',
+  'recebido',
+  'Distribuição para novo abrigo'
+);
