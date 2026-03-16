@@ -1,0 +1,25 @@
+export type CepResponse = {
+  cep?: string
+  logradouro?: string
+  complemento?: string
+  bairro?: string
+  localidade?: string
+  uf?: string
+  erro?: boolean
+}
+
+export async function buscarCep(cep: string): Promise<CepResponse | null> {
+  const clean = cep.replace(/\D/g, '')
+
+  if (clean.length !== 8) return null
+
+  try {
+    const response = await fetch(`https://viacep.com.br/ws/${clean}/json/`)
+    const data = await response.json()
+
+    if (data.erro) return null
+    return data
+  } catch {
+    return null
+  }
+}
