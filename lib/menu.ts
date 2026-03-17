@@ -98,6 +98,13 @@ export const menuItems: MenuItem[] = [
     section: 'funcionais',
     description: 'Publicação transparente de dados consolidados.',
   },
+  {
+    label: 'Mapa de Calor',
+    href: '/app/mapa-calor',
+    enabled: true,
+    section: 'funcionais',
+    description: 'Visualização geográfica das áreas mais críticas com base em score de severidade.',
+  },
   
   {
     label: 'Auditoria',
