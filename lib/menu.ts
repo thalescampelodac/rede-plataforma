@@ -78,27 +78,27 @@ export const menuItems: MenuItem[] = [
     description: 'Registro e monitoramento das entregas realizadas.',
   },
   {
+    label: 'Vaquinhas Online',
+    href: '/app/vaquinhas-online',
+    enabled: true,
+    section: 'funcionais',
+    description: 'Acompanhamento de arrecadações e campanhas digitais.',
+  },
+  {
     label: 'Impacto Geral',
     href: '/app/impacto-geral',
     enabled: true,
     section: 'funcionais',
     description: 'Indicadores consolidados e visão gerencial.',
   },
-  
-  {
-    label: 'Vaquinhas Online',
-    href: '/app/vaquinhas-online',
-    enabled: false,
-    section: 'construcao',
-    description: 'Acompanhamento de arrecadações e campanhas digitais.',
-  },
   {
     label: 'Transparência Pública',
     href: '/app/transparencia-publica',
-    enabled: false,
-    section: 'construcao',
+    enabled: true,
+    section: 'funcionais',
     description: 'Publicação transparente de dados consolidados.',
   },
+  
   {
     label: 'Auditoria',
     href: '/app/auditoria',

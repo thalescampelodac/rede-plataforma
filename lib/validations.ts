@@ -845,3 +845,85 @@ export function validateTransferencia(data: TransferenciaInput) {
     },
   }
 }
+
+export type VaquinhaInput = {
+  plataforma_utilizada: string
+  link_campanha: string
+  responsavel: string
+  estado: string
+  municipio_beneficiado: string
+  valor_arrecadado: string | number
+  valor_distribuido: string | number
+  observacoes?: string
+}
+
+export function validateVaquinha(data: VaquinhaInput) {
+  const errors: Record<string, string> = {}
+
+  if (!data.plataforma_utilizada?.trim()) {
+    errors.plataforma_utilizada = 'Selecione a plataforma.'
+  }
+
+  if (!data.link_campanha?.trim()) {
+    errors.link_campanha = 'Informe o link da campanha.'
+  }
+
+  if (!/^https?:\/\//i.test(data.link_campanha || '')) {
+    errors.link_campanha = 'Informe uma URL válida.'
+  }
+
+  if (!data.responsavel?.trim() || data.responsavel.trim().length < 3) {
+    errors.responsavel = 'Informe o responsável.'
+  }
+
+  if (!data.estado?.trim() || data.estado.trim().length !== 2) {
+    errors.estado = 'UF inválida.'
+  }
+
+  if (!data.municipio_beneficiado?.trim()) {
+    errors.municipio_beneficiado = 'Município é obrigatório.'
+  }
+
+  const arrecadado =
+    typeof data.valor_arrecadado === 'string'
+      ? currencyToNumber(data.valor_arrecadado)
+      : Number(data.valor_arrecadado)
+
+  if (arrecadado === null || Number.isNaN(arrecadado) || arrecadado < 0) {
+    errors.valor_arrecadado = 'Valor arrecadado inválido.'
+  }
+
+  const distribuido =
+    typeof data.valor_distribuido === 'string'
+      ? currencyToNumber(data.valor_distribuido)
+      : Number(data.valor_distribuido)
+
+  if (distribuido === null || Number.isNaN(distribuido) || distribuido < 0) {
+    errors.valor_distribuido = 'Valor distribuído inválido.'
+  }
+
+  if (
+    arrecadado !== null &&
+    distribuido !== null &&
+    !Number.isNaN(arrecadado) &&
+    !Number.isNaN(distribuido) &&
+    distribuido > arrecadado
+  ) {
+    errors.valor_distribuido = 'O valor distribuído não pode ser maior que o arrecadado.'
+  }
+
+  return {
+    valid: Object.keys(errors).length === 0,
+    errors,
+    normalized: {
+      plataforma_utilizada: data.plataforma_utilizada,
+      link_campanha: data.link_campanha.trim(),
+      responsavel: data.responsavel.trim(),
+      estado: data.estado.trim().toUpperCase(),
+      municipio_beneficiado: data.municipio_beneficiado.trim(),
+      valor_arrecadado: Number(arrecadado || 0),
+      valor_distribuido: Number(distribuido || 0),
+      observacoes: data.observacoes?.trim() || null,
+    },
+  }
+}

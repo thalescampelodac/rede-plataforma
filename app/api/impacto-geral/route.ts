@@ -6,85 +6,120 @@ export async function GET() {
     const supabase = getSupabaseAdmin()
 
     const [
-      familias,
-      empresas,
-      voluntarios,
-      moradias,
-      programas,
-      beneficios,
-      doacoes,
-      estoque,
-      entregas,
-      transferencias,
+      familiasRes,
+      empresasRes,
+      moradiasRes,
+      doacoesRes,
+      entregasRes,
     ] = await Promise.all([
-      supabase.from('familias_atingidas').select('*', { count: 'exact', head: true }),
+      supabase.from('familias_atingidas').select('*'),
       supabase.from('empresas_afetadas').select('*', { count: 'exact', head: true }),
-      supabase.from('voluntarios_ativos').select('*', { count: 'exact', head: true }),
-      supabase.from('moradias_afetadas').select('familias_afetadas'),
-      supabase.from('programas_governamentais').select('valor_total_distribuido'),
-      supabase.from('beneficios_por_familia').select('valor_quantidade'),
+      supabase.from('moradias_afetadas').select('*'),
       supabase.from('doacoes_recebidas').select('quantidade'),
-      supabase.from('estoque_humanitario').select('quantidade_estoque'),
-      supabase.from('entregas_familias').select('quantidade'),
-      supabase.from('transferencias_centros').select('quantidade'),
+      supabase.from('entregas_familias').select('familia_id, quantidade'),
     ])
 
-    const totalFamiliasAfetadasMoradias =
-      (moradias.data || []).reduce((acc, item) => acc + Number(item.familias_afetadas || 0), 0)
-
-    const totalProgramas = programas.data?.length || 0
-    const totalBeneficios = beneficios.data?.length || 0
-    const totalDoacoes = doacoes.data?.length || 0
-    const totalEstoque = estoque.data?.length || 0
-    const totalEntregas = entregas.data?.length || 0
-    const totalTransferencias = transferencias.data?.length || 0
-
-    const somaValorProgramas =
-      (programas.data || []).reduce(
-        (acc, item) => acc + Number(item.valor_total_distribuido || 0),
-        0
+    if (familiasRes.error) {
+      return NextResponse.json(
+        { message: 'Erro ao consultar famílias atingidas.' },
+        { status: 500 }
       )
+    }
 
-    const somaValorBeneficios =
-      (beneficios.data || []).reduce(
-        (acc, item) => acc + Number(item.valor_quantidade || 0),
-        0
+    if (empresasRes.error) {
+      return NextResponse.json(
+        { message: 'Erro ao consultar empresas afetadas.' },
+        { status: 500 }
       )
+    }
 
-    const somaQuantidadeDoacoes =
-      (doacoes.data || []).reduce((acc, item) => acc + Number(item.quantidade || 0), 0)
-
-    const somaQuantidadeEstoque =
-      (estoque.data || []).reduce(
-        (acc, item) => acc + Number(item.quantidade_estoque || 0),
-        0
+    if (moradiasRes.error) {
+      return NextResponse.json(
+        { message: 'Erro ao consultar moradias afetadas.' },
+        { status: 500 }
       )
+    }
 
-    const somaQuantidadeEntregas =
-      (entregas.data || []).reduce((acc, item) => acc + Number(item.quantidade || 0), 0)
+    if (doacoesRes.error) {
+      return NextResponse.json(
+        { message: 'Erro ao consultar doações recebidas.' },
+        { status: 500 }
+      )
+    }
 
-    const somaQuantidadeTransferencias =
-      (transferencias.data || []).reduce((acc, item) => acc + Number(item.quantidade || 0), 0)
+    if (entregasRes.error) {
+      return NextResponse.json(
+        { message: 'Erro ao consultar entregas às famílias.' },
+        { status: 500 }
+      )
+    }
+
+    const familias = familiasRes.data || []
+    const moradias = moradiasRes.data || []
+    const doacoes = doacoesRes.data || []
+    const entregas = entregasRes.data || []
+
+    // 1) Total de Famílias Atingidas
+    const totalFamiliasAtingidas = familias.length
+
+    // 2) Total de Famílias Assistidas
+    // Conta famílias únicas que receberam pelo menos uma entrega
+    const familiasAssistidasSet = new Set(
+      entregas
+        .map(item => item.familia_id)
+        .filter(Boolean)
+    )
+    const totalFamiliasAssistidas = familiasAssistidasSet.size
+
+    // 3) Pessoas Desalojadas
+    // Soma total_moradores das famílias com situacao_moradia = desalojada
+    const pessoasDesalojadas = familias.reduce((acc, item) => {
+      if (item.situacao_moradia === 'desalojada') {
+        return acc + Number(item.total_moradores || 0)
+      }
+      return acc
+    }, 0)
+
+    // 4) Pessoas Desabrigadas
+    // Soma total_moradores das famílias com situacao_moradia = desabrigada
+    const pessoasDesabrigadas = familias.reduce((acc, item) => {
+      if (item.situacao_moradia === 'desabrigada') {
+        return acc + Number(item.total_moradores || 0)
+      }
+      return acc
+    }, 0)
+
+    // 5) Empresas Afetadas
+    const empresasAfetadas = empresasRes.count || 0
+
+    // 6) Moradias Destruídas
+    // Considera moradias com tipo_dano = desabamento_total
+    const moradiasDestruidas = moradias.filter(
+      item => item.tipo_dano === 'desabamento_total'
+    ).length
+
+    // 7) Volume Total de Doações Recebidas
+    // Soma da quantidade registrada em doações_recebidas
+    const volumeTotalDoacoesRecebidas = doacoes.reduce((acc, item) => {
+      return acc + Number(item.quantidade || 0)
+    }, 0)
+
+    // 8) Volume Total Distribuído
+    // Soma da quantidade registrada em entregas_familias
+    const volumeTotalDistribuido = entregas.reduce((acc, item) => {
+      return acc + Number(item.quantidade || 0)
+    }, 0)
 
     return NextResponse.json({
       indicadores: {
-        familias_atingidas: familias.count || 0,
-        empresas_afetadas: empresas.count || 0,
-        voluntarios_ativos: voluntarios.count || 0,
-        moradias_afetadas: moradias.data?.length || 0,
-        programas_governamentais: totalProgramas,
-        beneficios_concedidos: totalBeneficios,
-        doacoes_recebidas: totalDoacoes,
-        itens_estoque: totalEstoque,
-        entregas_realizadas: totalEntregas,
-        transferencias_centros: totalTransferencias,
-        familias_em_moradias: totalFamiliasAfetadasMoradias,
-        valor_programas: somaValorProgramas,
-        valor_beneficios: somaValorBeneficios,
-        quantidade_doacoes: somaQuantidadeDoacoes,
-        quantidade_estoque: somaQuantidadeEstoque,
-        quantidade_entregas: somaQuantidadeEntregas,
-        quantidade_transferencias: somaQuantidadeTransferencias,
+        total_familias_atingidas: totalFamiliasAtingidas,
+        total_familias_assistidas: totalFamiliasAssistidas,
+        pessoas_desalojadas: pessoasDesalojadas,
+        pessoas_desabrigadas: pessoasDesabrigadas,
+        empresas_afetadas: empresasAfetadas,
+        moradias_destruidas: moradiasDestruidas,
+        volume_total_doacoes_recebidas: volumeTotalDoacoesRecebidas,
+        volume_total_distribuido: volumeTotalDistribuido,
       },
     })
   } catch {

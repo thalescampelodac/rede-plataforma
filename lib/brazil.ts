@@ -159,3 +159,11 @@ export const unidadesMedida = [
   { value: 'kg', label: 'Kg' },
   { value: 'litro', label: 'Litro' },
 ]
+
+export const plataformasVaquinha = [
+  { value: 'Vakinha', label: 'Vakinha' },
+  { value: 'Benfeitoria', label: 'Benfeitoria' },
+  { value: 'Apoia.se', label: 'Apoia.se' },
+  { value: 'Kickante', label: 'Kickante' },
+  { value: 'Outros', label: 'Outros' },
+]

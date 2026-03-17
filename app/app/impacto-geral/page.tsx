@@ -4,23 +4,14 @@ import { useEffect, useState } from 'react'
 import Topbar from '@/components/Topbar'
 
 type Indicadores = {
-  familias_atingidas: number
+  total_familias_atingidas: number
+  total_familias_assistidas: number
+  pessoas_desalojadas: number
+  pessoas_desabrigadas: number
   empresas_afetadas: number
-  voluntarios_ativos: number
-  moradias_afetadas: number
-  programas_governamentais: number
-  beneficios_concedidos: number
-  doacoes_recebidas: number
-  itens_estoque: number
-  entregas_realizadas: number
-  transferencias_centros: number
-  familias_em_moradias: number
-  valor_programas: number
-  valor_beneficios: number
-  quantidade_doacoes: number
-  quantidade_estoque: number
-  quantidade_entregas: number
-  quantidade_transferencias: number
+  moradias_destruidas: number
+  volume_total_doacoes_recebidas: number
+  volume_total_distribuido: number
 }
 
 function formatCurrency(value: number) {
@@ -49,7 +40,35 @@ export default function ImpactoGeralPage() {
         return
       }
 
-      setIndicadores(data.indicadores)
+      const raw = data.indicadores || {}
+
+      const mapped: Indicadores = {
+        total_familias_atingidas:
+          Number(raw.total_familias_atingidas ?? raw.familias_atingidas ?? 0),
+
+        total_familias_assistidas:
+          Number(raw.total_familias_assistidas ?? raw.entregas_realizadas ?? 0),
+
+        pessoas_desalojadas:
+          Number(raw.pessoas_desalojadas ?? raw.total_desalojadas ?? 0),
+
+        pessoas_desabrigadas:
+          Number(raw.pessoas_desabrigadas ?? raw.total_desabrigadas ?? 0),
+
+        empresas_afetadas:
+          Number(raw.empresas_afetadas ?? 0),
+
+        moradias_destruidas:
+          Number(raw.moradias_destruidas ?? 0),
+
+        volume_total_doacoes_recebidas:
+          Number(raw.volume_total_doacoes_recebidas ?? raw.quantidade_doacoes ?? 0),
+
+        volume_total_distribuido:
+          Number(raw.volume_total_distribuido ?? raw.quantidade_entregas ?? 0),
+      }
+
+      setIndicadores(mapped)
     } catch {
       setMessage('Erro ao carregar indicadores.')
     }
@@ -63,7 +82,7 @@ export default function ImpactoGeralPage() {
     <>
       <Topbar
         title="Impacto Geral"
-        subtitle="Painel consolidado com indicadores da operação humanitária."
+        subtitle="Painel consolidado com indicadores estratégicos da operação humanitária."
       />
 
       {message && <div className="alert alert-warning">{message}</div>}
@@ -77,25 +96,45 @@ export default function ImpactoGeralPage() {
           <div className="row g-4 mb-4">
             <div className="col-md-6 col-xl-3">
               <div className="page-card h-100">
-                <div className="text-muted small mb-2">Famílias atingidas</div>
+                <div className="text-muted small mb-2">Total de Famílias Atingidas</div>
                 <div className="display-6 fw-semibold">
-                  {formatNumber(indicadores.familias_atingidas)}
+                  {formatNumber(indicadores.total_familias_atingidas)}
                 </div>
               </div>
             </div>
 
             <div className="col-md-6 col-xl-3">
               <div className="page-card h-100">
-                <div className="text-muted small mb-2">Moradias afetadas</div>
+                <div className="text-muted small mb-2">Total de Famílias Assistidas</div>
                 <div className="display-6 fw-semibold">
-                  {formatNumber(indicadores.moradias_afetadas)}
+                  {formatNumber(indicadores.total_familias_assistidas)}
                 </div>
               </div>
             </div>
 
             <div className="col-md-6 col-xl-3">
               <div className="page-card h-100">
-                <div className="text-muted small mb-2">Empresas afetadas</div>
+                <div className="text-muted small mb-2">Pessoas Desalojadas</div>
+                <div className="display-6 fw-semibold">
+                  {formatNumber(indicadores.pessoas_desalojadas)}
+                </div>
+              </div>
+            </div>
+
+            <div className="col-md-6 col-xl-3">
+              <div className="page-card h-100">
+                <div className="text-muted small mb-2">Pessoas Desabrigadas</div>
+                <div className="display-6 fw-semibold">
+                  {formatNumber(indicadores.pessoas_desabrigadas)}
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div className="row g-4 mb-4">
+            <div className="col-md-6 col-xl-3">
+              <div className="page-card h-100">
+                <div className="text-muted small mb-2">Empresas Afetadas</div>
                 <div className="display-6 fw-semibold">
                   {formatNumber(indicadores.empresas_afetadas)}
                 </div>
@@ -104,110 +143,35 @@ export default function ImpactoGeralPage() {
 
             <div className="col-md-6 col-xl-3">
               <div className="page-card h-100">
-                <div className="text-muted small mb-2">Voluntários ativos</div>
+                <div className="text-muted small mb-2">Moradias Destruídas</div>
                 <div className="display-6 fw-semibold">
-                  {formatNumber(indicadores.voluntarios_ativos)}
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <div className="row g-4 mb-4">
-            <div className="col-md-6 col-xl-3">
-              <div className="page-card h-100">
-                <div className="text-muted small mb-2">Benefícios concedidos</div>
-                <div className="display-6 fw-semibold">
-                  {formatNumber(indicadores.beneficios_concedidos)}
+                  {formatNumber(indicadores.moradias_destruidas)}
                 </div>
               </div>
             </div>
 
             <div className="col-md-6 col-xl-3">
               <div className="page-card h-100">
-                <div className="text-muted small mb-2">Doações recebidas</div>
-                <div className="display-6 fw-semibold">
-                  {formatNumber(indicadores.doacoes_recebidas)}
+                <div className="text-muted small mb-2">Volume Total de Doações Recebidas</div>
+                <div className="h3 fw-semibold mb-0">
+                  {formatCurrency(indicadores.volume_total_doacoes_recebidas)}
                 </div>
               </div>
             </div>
 
             <div className="col-md-6 col-xl-3">
               <div className="page-card h-100">
-                <div className="text-muted small mb-2">Itens em estoque</div>
-                <div className="display-6 fw-semibold">
-                  {formatNumber(indicadores.itens_estoque)}
-                </div>
-              </div>
-            </div>
-
-            <div className="col-md-6 col-xl-3">
-              <div className="page-card h-100">
-                <div className="text-muted small mb-2">Entregas realizadas</div>
-                <div className="display-6 fw-semibold">
-                  {formatNumber(indicadores.entregas_realizadas)}
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <div className="row g-4 mb-4">
-            <div className="col-xl-6">
-              <div className="page-card h-100">
-                <h2 className="h5 mb-3">Resumo financeiro</h2>
-                <div className="row g-3">
-                  <div className="col-md-6">
-                    <div className="soft-card p-3">
-                      <div className="text-muted small mb-2">Valor total em programas</div>
-                      <div className="h4 mb-0">{formatCurrency(indicadores.valor_programas)}</div>
-                    </div>
-                  </div>
-                  <div className="col-md-6">
-                    <div className="soft-card p-3">
-                      <div className="text-muted small mb-2">Valor total em benefícios</div>
-                      <div className="h4 mb-0">{formatCurrency(indicadores.valor_beneficios)}</div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <div className="col-xl-6">
-              <div className="page-card h-100">
-                <h2 className="h5 mb-3">Resumo operacional</h2>
-                <div className="row g-3">
-                  <div className="col-md-6">
-                    <div className="soft-card p-3">
-                      <div className="text-muted small mb-2">Qtd. total de doações</div>
-                      <div className="h4 mb-0">{formatNumber(indicadores.quantidade_doacoes)}</div>
-                    </div>
-                  </div>
-                  <div className="col-md-6">
-                    <div className="soft-card p-3">
-                      <div className="text-muted small mb-2">Qtd. total em estoque</div>
-                      <div className="h4 mb-0">{formatNumber(indicadores.quantidade_estoque)}</div>
-                    </div>
-                  </div>
-                  <div className="col-md-6">
-                    <div className="soft-card p-3">
-                      <div className="text-muted small mb-2">Qtd. total entregue</div>
-                      <div className="h4 mb-0">{formatNumber(indicadores.quantidade_entregas)}</div>
-                    </div>
-                  </div>
-                  <div className="col-md-6">
-                    <div className="soft-card p-3">
-                      <div className="text-muted small mb-2">Qtd. transferida</div>
-                      <div className="h4 mb-0">
-                        {formatNumber(indicadores.quantidade_transferencias)}
-                      </div>
-                    </div>
-                  </div>
+                <div className="text-muted small mb-2">Volume Total Distribuído</div>
+                <div className="h3 fw-semibold mb-0">
+                  {formatCurrency(indicadores.volume_total_distribuido)}
                 </div>
               </div>
             </div>
           </div>
 
           <div className="page-card">
-            <h2 className="h5 mb-3">Resumo consolidado</h2>
+            <h2 className="h5 mb-3">Resumo Consolidado</h2>
+
             <div className="table-responsive">
               <table className="table align-middle">
                 <thead>
@@ -218,56 +182,36 @@ export default function ImpactoGeralPage() {
                 </thead>
                 <tbody>
                   <tr>
-                    <td>Famílias atingidas</td>
-                    <td>{formatNumber(indicadores.familias_atingidas)}</td>
+                    <td>Total de Famílias Atingidas</td>
+                    <td>{formatNumber(indicadores.total_familias_atingidas)}</td>
                   </tr>
                   <tr>
-                    <td>Famílias associadas às moradias</td>
-                    <td>{formatNumber(indicadores.familias_em_moradias)}</td>
+                    <td>Total de Famílias Assistidas</td>
+                    <td>{formatNumber(indicadores.total_familias_assistidas)}</td>
                   </tr>
                   <tr>
-                    <td>Moradias afetadas</td>
-                    <td>{formatNumber(indicadores.moradias_afetadas)}</td>
+                    <td>Pessoas Desalojadas</td>
+                    <td>{formatNumber(indicadores.pessoas_desalojadas)}</td>
                   </tr>
                   <tr>
-                    <td>Empresas afetadas</td>
+                    <td>Pessoas Desabrigadas</td>
+                    <td>{formatNumber(indicadores.pessoas_desabrigadas)}</td>
+                  </tr>
+                  <tr>
+                    <td>Empresas Afetadas</td>
                     <td>{formatNumber(indicadores.empresas_afetadas)}</td>
                   </tr>
                   <tr>
-                    <td>Voluntários ativos</td>
-                    <td>{formatNumber(indicadores.voluntarios_ativos)}</td>
+                    <td>Moradias Destruídas</td>
+                    <td>{formatNumber(indicadores.moradias_destruidas)}</td>
                   </tr>
                   <tr>
-                    <td>Programas governamentais</td>
-                    <td>{formatNumber(indicadores.programas_governamentais)}</td>
+                    <td>Volume Total de Doações Recebidas</td>
+                    <td>{formatCurrency(indicadores.volume_total_doacoes_recebidas)}</td>
                   </tr>
                   <tr>
-                    <td>Benefícios concedidos</td>
-                    <td>{formatNumber(indicadores.beneficios_concedidos)}</td>
-                  </tr>
-                  <tr>
-                    <td>Doações recebidas</td>
-                    <td>{formatNumber(indicadores.doacoes_recebidas)}</td>
-                  </tr>
-                  <tr>
-                    <td>Itens em estoque</td>
-                    <td>{formatNumber(indicadores.itens_estoque)}</td>
-                  </tr>
-                  <tr>
-                    <td>Entregas realizadas</td>
-                    <td>{formatNumber(indicadores.entregas_realizadas)}</td>
-                  </tr>
-                  <tr>
-                    <td>Transferências entre centros</td>
-                    <td>{formatNumber(indicadores.transferencias_centros)}</td>
-                  </tr>
-                  <tr>
-                    <td>Valor total distribuído em programas</td>
-                    <td>{formatCurrency(indicadores.valor_programas)}</td>
-                  </tr>
-                  <tr>
-                    <td>Valor total distribuído em benefícios</td>
-                    <td>{formatCurrency(indicadores.valor_beneficios)}</td>
+                    <td>Volume Total Distribuído</td>
+                    <td>{formatCurrency(indicadores.volume_total_distribuido)}</td>
                   </tr>
                 </tbody>
               </table>

@@ -741,3 +741,46 @@ values
   'recebido',
   'Distribuição para novo abrigo'
 );
+
+insert into public.vaquinhas_online
+(
+  plataforma_utilizada,
+  link_campanha,
+  responsavel,
+  estado,
+  municipio_beneficiado,
+  valor_arrecadado,
+  valor_distribuido,
+  observacoes
+)
+values
+(
+  'Vakinha',
+  'https://vakinha.com.br/vaquinha/apoio-zona-da-mata-1',
+  'Madelleine Lima',
+  'MG',
+  'Juiz de Fora',
+  15000,
+  8500,
+  'Campanha emergencial para apoio às famílias atingidas'
+),
+(
+  'Benfeitoria',
+  'https://benfeitoria.com/projeto/rede-solidaria-mg',
+  'Instituto Rede Solidária',
+  'MG',
+  'Ubá',
+  9800,
+  4200,
+  'Arrecadação para kits de higiene e alimentação'
+),
+(
+  'Vakinha',
+  'https://vakinha.com.br/vaquinha/reconstrucao-petropolis',
+  'Comitê Regional de Apoio',
+  'RJ',
+  'Petrópolis',
+  22000,
+  17300,
+  'Apoio à reconstrução e compra de materiais'
+);

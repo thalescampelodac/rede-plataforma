@@ -463,5 +463,49 @@ create index idx_transferencias_destino on transferencias_centros(centro_destino
 create index idx_transferencias_item on transferencias_centros(nome_item);
 
 --------------------------------------------------------------------------------
+--           vaquinhas_online
+--------------------------------------------------------------------------------
+
+create table if not exists public.vaquinhas_online (
+  id uuid primary key default gen_random_uuid(),
+
+  plataforma_utilizada text not null,
+  link_campanha text not null,
+  responsavel text not null,
+
+  estado char(2) not null,
+  municipio_beneficiado text not null,
+
+  valor_arrecadado numeric(14,2) not null default 0,
+  valor_distribuido numeric(14,2) not null default 0,
+
+  observacoes text,
+
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
+);
+
+create or replace function public.set_updated_at_vaquinhas()
+returns trigger
+language plpgsql
+as $$
+begin
+  new.updated_at = now();
+  return new;
+end;
+$$;
+
+drop trigger if exists trg_vaquinhas_updated_at on public.vaquinhas_online;
+
+create trigger trg_vaquinhas_updated_at
+before update on public.vaquinhas_online
+for each row
+execute function public.set_updated_at_vaquinhas();
+
+create index idx_vaquinhas_plataforma on vaquinhas_online(plataforma_utilizada);
+create index idx_vaquinhas_municipio on vaquinhas_online(municipio_beneficiado);
+create index idx_vaquinhas_responsavel on vaquinhas_online(responsavel);
+
+--------------------------------------------------------------------------------
 --           
 --------------------------------------------------------------------------------
