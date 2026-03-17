@@ -6,6 +6,8 @@ import Topbar from '@/components/Topbar'
 import { buscarCep } from '@/lib/cep'
 import { estados, necessidadesPrioritarias, situacoesMoradia } from '@/lib/brazil'
 import { maskCEP, maskCPF, maskCurrency, maskPhone } from '@/lib/masks'
+import ImportExcelButton from '@/components/ImportExcelButton'
+import DownloadTemplateButton from '@/components/DownloadTemplateButton'
 
 type Option = {
   value: string
@@ -234,7 +236,28 @@ export default function FamiliasAtingidasPage() {
         title="Famílias Atingidas"
         subtitle="Cadastro, consulta, edição e remoção de famílias impactadas."
       />
+	  
+	  <div className="page-card mb-4">
+		  <div className="d-flex justify-content-between align-items-center flex-wrap gap-3">
+			<div>
+			  <h2 className="h5 mb-1">Importação em lote</h2>
+			  <p className="text-muted mb-0">
+				Envie um arquivo Excel no template do módulo.
+			  </p>
+			</div>
 
+			<div className="d-flex gap-2 flex-wrap">
+			  <DownloadTemplateButton href="/templates/rede_import_template_fase1_limpo.xlsx" />
+			  <ImportExcelButton
+				endpoint="/api/familias-atingidas/import"
+				onImported={async () => {
+				  await loadItems()
+				}}
+			  />
+			</div>
+		  </div>
+	  </div>
+	  
       {message && (
         <div className={`alert ${Object.keys(errors).length ? 'alert-warning' : 'alert-info'}`}>
           {message}
