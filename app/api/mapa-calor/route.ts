@@ -86,49 +86,67 @@ export async function GET() {
       )
     }
 
-    const pontos = (data || [])
-      .map((item: any) => {
-        const lat = Number(item.latitude)
-        const lng = Number(item.longitude)
+    type PontoMapaCalor = {
+	  id: string
+	  latitude: number
+	  longitude: number
+	  score: number
+	  endereco: string
+	  bairro: string
+	  municipio: string
+	  estado: string
+	  tipo_dano: string
+	  risco_estrutural: string
+	  familias_afetadas: number
+	  familia_nome: string | null
+	  total_moradores: number
+	  situacao_moradia: string | null
+	}
 
-        if (Number.isNaN(lat) || Number.isNaN(lng)) return null
+	const pontosBrutos = (data || []).map((item: any): PontoMapaCalor | null => {
+	  const lat = Number(item.latitude)
+	  const lng = Number(item.longitude)
 
-        const familia = Array.isArray(item.familias_atingidas)
-          ? item.familias_atingidas[0]
-          : item.familias_atingidas
+	  if (Number.isNaN(lat) || Number.isNaN(lng)) return null
 
-        const familiasAfetadas = Number(item.familias_afetadas || 0)
-        const totalMoradores = Number(familia?.total_moradores || 0)
+	  const familia = Array.isArray(item.familias_atingidas)
+		? item.familias_atingidas[0]
+		: item.familias_atingidas
 
-        const score =
-          1 +
-          familiasAfetadas +
-          totalMoradores +
-          situacaoScore(familia?.situacao_moradia) +
-          tipoDanoScore(item.tipo_dano) +
-          riscoScore(item.risco_estrutural)
+	  const familiasAfetadas = Number(item.familias_afetadas || 0)
+	  const totalMoradores = Number(familia?.total_moradores || 0)
 
-        return {
-          id: item.id,
-          latitude: lat,
-          longitude: lng,
-          score,
-          endereco: `${item.logradouro}, ${item.numero}`,
-          bairro: item.bairro,
-          municipio: item.municipio,
-          estado: item.estado,
-          tipo_dano: item.tipo_dano,
-          risco_estrutural: item.risco_estrutural,
-          familias_afetadas: familiasAfetadas,
-          familia_nome: familia?.nome_responsavel || null,
-          total_moradores: totalMoradores,
-          situacao_moradia: familia?.situacao_moradia || null,
-        }
-      })
-      .filter(Boolean)
-      .sort((a: any, b: any) => b.score - a.score)
+	  const score =
+		1 +
+		familiasAfetadas +
+		totalMoradores +
+		situacaoScore(familia?.situacao_moradia) +
+		tipoDanoScore(item.tipo_dano) +
+		riscoScore(item.risco_estrutural)
 
-    const maxScore = pontos.length ? pontos[0].score : 1
+	  return {
+		id: item.id,
+		latitude: lat,
+		longitude: lng,
+		score,
+		endereco: `${item.logradouro}, ${item.numero}`,
+		bairro: item.bairro,
+		municipio: item.municipio,
+		estado: item.estado,
+		tipo_dano: item.tipo_dano,
+		risco_estrutural: item.risco_estrutural,
+		familias_afetadas: familiasAfetadas,
+		familia_nome: familia?.nome_responsavel || null,
+		total_moradores: totalMoradores,
+		situacao_moradia: familia?.situacao_moradia || null,
+	  }
+	})
+
+	const pontos: PontoMapaCalor[] = pontosBrutos
+	  .filter((p): p is PontoMapaCalor => p !== null)
+	  .sort((a, b) => b.score - a.score)
+
+	const maxScore = pontos.length > 0 ? pontos[0]!.score : 1
 
     const heatPoints = pontos.map((p: any) => [
       p.latitude,
