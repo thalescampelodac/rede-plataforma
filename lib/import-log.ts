@@ -8,6 +8,7 @@ export type ImportLogRow = {
 }
 
 export function buildImportLogText(params: {
+  motivo: string
   modulo: string
   aba: string
   totalLidas: number
@@ -18,6 +19,7 @@ export function buildImportLogText(params: {
   const lines: string[] = []
 
   lines.push('RESUMO DA IMPORTAÇÃO')
+  lines.push(`Motivo: ${params.motivo}`)
   lines.push(`Módulo: ${params.modulo}`)
   lines.push(`Aba lida: ${params.aba}`)
   lines.push('')

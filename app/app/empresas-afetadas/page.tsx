@@ -3,6 +3,8 @@
 import { useEffect, useState } from 'react'
 import Select from 'react-select'
 import Topbar from '@/components/Topbar'
+import DownloadTemplateButton from '@/components/DownloadTemplateButton'
+import ImportExcelButton from '@/components/ImportExcelButton'
 import { estados, setoresEconomicos, tiposImpactoEmpresa } from '@/lib/brazil'
 import { maskCNPJ, maskCurrency } from '@/lib/masks'
 
@@ -172,6 +174,25 @@ export default function EmpresasAfetadasPage() {
         title="Empresas Afetadas"
         subtitle="Cadastro, consulta, edição e remoção de empresas impactadas."
       />
+
+      <div className="page-card mb-4">
+        <div className="d-flex justify-content-between align-items-center flex-wrap gap-3">
+          <div>
+            <h2 className="h5 mb-1">Importacao em lote</h2>
+            <p className="text-muted mb-0">Envie um arquivo Excel no template do modulo.</p>
+          </div>
+
+          <div className="d-flex gap-2 flex-wrap">
+            <DownloadTemplateButton href="/api/empresas-afetadas/template" />
+            <ImportExcelButton
+              endpoint="/api/empresas-afetadas/import"
+              onImported={async () => {
+                await loadItems()
+              }}
+            />
+          </div>
+        </div>
+      </div>
 
       {message && (
         <div className={`alert ${Object.keys(errors).length ? 'alert-warning' : 'alert-info'}`}>

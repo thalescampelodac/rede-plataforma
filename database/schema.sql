@@ -57,6 +57,20 @@ before update on public.familias_atingidas
 for each row
 execute function public.set_updated_at_familias();
 
+alter table public.familias_atingidas
+add column if not exists municipio_ibge varchar(7),
+add column if not exists ano_referencia integer,
+add column if not exists sequencial_ihu integer;
+
+create unique index if not exists ux_familias_ihu
+on public.familias_atingidas(ihu);
+
+create index if not exists idx_familias_ihu_seq
+on public.familias_atingidas(estado, municipio, ano_referencia, sequencial_ihu);
+
+-----------------------------------------------------------------------------------|
+-----------------------------------------------------------------------------------|
+
 create table if not exists public.empresas_afetadas (
   id uuid primary key default gen_random_uuid(),
 

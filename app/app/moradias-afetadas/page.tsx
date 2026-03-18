@@ -7,6 +7,8 @@ import { buscarCep } from '@/lib/cep'
 import { estados, riscosEstruturais, tiposDanoMoradia } from '@/lib/brazil'
 import { maskCEP, maskCPF } from '@/lib/masks'
 import dynamic from 'next/dynamic'
+import ImportExcelButton from '@/components/ImportExcelButton'
+import DownloadTemplateButton from '@/components/DownloadTemplateButton'
 
 const MoradiasMap = dynamic(() => import('@/components/MoradiasMap'), {
   ssr: false,
@@ -245,9 +247,20 @@ export default function MoradiasAfetadasPage() {
       ...initialForm,
       ...item,
       cep: maskCEP(item.cep || ''),
+      logradouro: item.logradouro || '',
+      numero: item.numero || '',
       complemento: item.complemento || '',
+      bairro: item.bairro || '',
+      estado: item.estado || '',
+      municipio: item.municipio || '',
+      tipo_dano: item.tipo_dano || '',
+      risco_estrutural: item.risco_estrutural || '',
+      familias_afetadas: item.familias_afetadas ?? 1,
+      latitude: item.latitude ?? '',
+      longitude: item.longitude ?? '',
       observacoes: item.observacoes || '',
       familia_id: item.familia_id || null,
+      necessidade_reconstrucao: !!item.necessidade_reconstrucao,
     })
   }
 
@@ -257,6 +270,27 @@ export default function MoradiasAfetadasPage() {
         title="Moradias Afetadas"
         subtitle="Cadastro, consulta, edição e remoção de moradias impactadas."
       />
+
+      <div className="page-card mb-4">
+        <div className="d-flex justify-content-between align-items-center flex-wrap gap-3">
+          <div>
+            <h2 className="h5 mb-1">Importação em lote</h2>
+            <p className="text-muted mb-0">
+              Envie um arquivo Excel no template do módulo.
+            </p>
+          </div>
+
+          <div className="d-flex gap-2 flex-wrap">
+            <DownloadTemplateButton href="/templates/rede_import_template_moradias_afetadas.xlsx" />
+            <ImportExcelButton
+              endpoint="/api/moradias-afetadas/import"
+              onImported={async () => {
+                await loadItems()
+              }}
+            />
+          </div>
+        </div>
+      </div>
 
       {message && (
         <div className={`alert ${Object.keys(errors).length ? 'alert-warning' : 'alert-info'}`}>
@@ -285,7 +319,7 @@ export default function MoradiasAfetadasPage() {
             <label className="form-label">CEP</label>
             <input
               className={`form-control ${errors.cep ? 'is-invalid' : ''}`}
-              value={form.cep}
+              value={form.cep || ''}
               onChange={e => updateField('cep', e.target.value)}
               onBlur={handleCepBlur}
             />
@@ -296,7 +330,7 @@ export default function MoradiasAfetadasPage() {
             <label className="form-label">Número</label>
             <input
               className={`form-control ${errors.numero ? 'is-invalid' : ''}`}
-              value={form.numero}
+              value={form.numero || ''}
               onChange={e => updateField('numero', e.target.value)}
             />
             <div className="invalid-feedback">{errors.numero}</div>
@@ -306,7 +340,7 @@ export default function MoradiasAfetadasPage() {
             <label className="form-label">Logradouro</label>
             <input
               className={`form-control ${errors.logradouro ? 'is-invalid' : ''}`}
-              value={form.logradouro}
+              value={form.logradouro || ''}
               onChange={e => updateField('logradouro', e.target.value)}
             />
             <div className="invalid-feedback">{errors.logradouro}</div>
@@ -316,7 +350,7 @@ export default function MoradiasAfetadasPage() {
             <label className="form-label">Complemento</label>
             <input
               className="form-control"
-              value={form.complemento}
+              value={form.complemento || ''}
               onChange={e => updateField('complemento', e.target.value)}
             />
           </div>
@@ -325,7 +359,7 @@ export default function MoradiasAfetadasPage() {
             <label className="form-label">Bairro</label>
             <input
               className={`form-control ${errors.bairro ? 'is-invalid' : ''}`}
-              value={form.bairro}
+              value={form.bairro || ''}
               onChange={e => updateField('bairro', e.target.value)}
             />
             <div className="invalid-feedback">{errors.bairro}</div>
@@ -407,7 +441,7 @@ export default function MoradiasAfetadasPage() {
             <label className="form-label">Latitude</label>
             <input
               className={`form-control ${errors.latitude ? 'is-invalid' : ''}`}
-              value={form.latitude}
+              value={form.latitude ?? ''}
               onChange={e => updateField('latitude', e.target.value)}
             />
             <div className="invalid-feedback">{errors.latitude}</div>
@@ -417,7 +451,7 @@ export default function MoradiasAfetadasPage() {
             <label className="form-label">Longitude</label>
             <input
               className={`form-control ${errors.longitude ? 'is-invalid' : ''}`}
-              value={form.longitude}
+              value={form.longitude ?? ''}
               onChange={e => updateField('longitude', e.target.value)}
             />
             <div className="invalid-feedback">{errors.longitude}</div>
@@ -443,7 +477,7 @@ export default function MoradiasAfetadasPage() {
             <textarea
               className="form-control"
               rows={3}
-              value={form.observacoes}
+              value={form.observacoes || ''}
               onChange={e => updateField('observacoes', e.target.value)}
             />
           </div>
@@ -488,18 +522,18 @@ export default function MoradiasAfetadasPage() {
             </button>
           </div>
         </div>
-		
-		<div className="page-card mb-4">
-		  <div className="d-flex justify-content-between align-items-center mb-3">
-			<h2 className="h5 mb-0">Mapa das moradias afetadas</h2>
-		  </div>
 
-		  <p className="text-muted">
-			Visualização geográfica das moradias com latitude e longitude informadas.
-		  </p>
+        <div className="page-card mb-4">
+          <div className="d-flex justify-content-between align-items-center mb-3">
+            <h2 className="h5 mb-0">Mapa das moradias afetadas</h2>
+          </div>
 
-		  <MoradiasMap items={items} />
-		</div>
+          <p className="text-muted">
+            Visualização geográfica das moradias com latitude e longitude informadas.
+          </p>
+
+          <MoradiasMap items={items} />
+        </div>
 
         <div className="table-responsive">
           <table className="table align-middle">

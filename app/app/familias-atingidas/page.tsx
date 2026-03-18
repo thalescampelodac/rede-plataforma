@@ -79,6 +79,7 @@ const selectStyles = {
 }
 
 export default function FamiliasAtingidasPage() {
+  const pageSize = 10
   const [form, setForm] = useState<Familia>(initialForm)
   const [items, setItems] = useState<Familia[]>([])
   const [editingId, setEditingId] = useState<string | null>(null)
@@ -87,6 +88,9 @@ export default function FamiliasAtingidasPage() {
   const [query, setQuery] = useState('')
   const [loading, setLoading] = useState(false)
   const [municipios, setMunicipios] = useState<Option[]>([])
+  const [page, setPage] = useState(1)
+  const [total, setTotal] = useState(0)
+  const [totalPages, setTotalPages] = useState(1)
 
   async function carregarMunicipios(uf: string) {
     if (!uf) {
@@ -115,10 +119,15 @@ export default function FamiliasAtingidasPage() {
     carregarMunicipios(form.estado)
   }, [form.estado])
 
-  async function loadItems(search = query) {
-    const response = await fetch(`/api/familias-atingidas?q=${encodeURIComponent(search)}`)
+  async function loadItems(search = query, nextPage = page) {
+    const response = await fetch(
+      `/api/familias-atingidas?q=${encodeURIComponent(search)}&page=${nextPage}&pageSize=${pageSize}`
+    )
     const data = await response.json()
     setItems(data.items || [])
+    setPage(data.page || nextPage)
+    setTotal(data.total || 0)
+    setTotalPages(data.totalPages || 1)
   }
 
   useEffect(() => {
@@ -131,6 +140,7 @@ export default function FamiliasAtingidasPage() {
     if (field === 'cpf') newValue = maskCPF(String(value))
     if (field === 'telefone') newValue = maskPhone(String(value))
     if (field === 'cep') newValue = maskCEP(String(value))
+
     if (field === 'renda_familiar_estimada') {
       const digits = String(value).replace(/\D/g, '')
       newValue = digits ? maskCurrency(digits) : ''
@@ -201,24 +211,45 @@ export default function FamiliasAtingidasPage() {
     await loadItems()
   }
 
-  function handleEdit(item: Familia) {
-    setEditingId(item.id || null)
-    setErrors({})
-    setMessage('')
-    setForm({
-      ...initialForm,
-      ...item,
-      cpf: maskCPF(item.cpf || ''),
-      telefone: maskPhone(item.telefone || ''),
-      cep: maskCEP(item.cep || ''),
-      renda_familiar_estimada: item.renda_familiar_estimada
-        ? Number(item.renda_familiar_estimada).toLocaleString('pt-BR', {
-            style: 'currency',
-            currency: 'BRL',
-          })
-        : '',
-    })
-  }
+	function handleEdit(item: Familia) {
+	  setEditingId(item.id || null)
+	  setErrors({})
+	  setMessage('')
+
+	  setForm({
+		...initialForm,
+		...item,
+		ihu: item.ihu || '',
+		nome_responsavel: item.nome_responsavel || '',
+		cpf: maskCPF(item.cpf || ''),
+		telefone: maskPhone(item.telefone || ''),
+		cep: maskCEP(item.cep || ''),
+		logradouro: item.logradouro || '',
+		numero: item.numero || '',
+		complemento: item.complemento || '',
+		bairro: item.bairro || '',
+		estado: item.estado || '',
+		municipio: item.municipio || '',
+		situacao_moradia: item.situacao_moradia || '',
+		ocupacao_responsavel: item.ocupacao_responsavel || '',
+		renda_familiar_estimada: item.renda_familiar_estimada
+		  ? Number(item.renda_familiar_estimada).toLocaleString('pt-BR', {
+			  style: 'currency',
+			  currency: 'BRL',
+			})
+		  : '',
+		total_moradores: item.total_moradores ?? '',
+		criancas: item.criancas ?? 0,
+		adolescentes: item.adolescentes ?? 0,
+		adultos: item.adultos ?? 0,
+		idosos: item.idosos ?? 0,
+		pcd: item.pcd ?? 0,
+		gestantes: item.gestantes ?? 0,
+		bebes: item.bebes ?? 0,
+		perda_renda: !!item.perda_renda,
+		necessidades_prioritarias: item.necessidades_prioritarias || [],
+	  })
+	}
 
   const necessidadeOptions = useMemo(
     () => necessidadesPrioritarias.map(item => ({ value: item.value, label: item.label })),
@@ -226,9 +257,11 @@ export default function FamiliasAtingidasPage() {
   )
 
   const estadoOption = estados.find(item => item.value === form.estado) || null
-  const situacaoOption = situacoesMoradia
-    .map(item => ({ value: item.value, label: item.label }))
-    .find(item => item.value === form.situacao_moradia) || null
+
+  const situacaoOption =
+    situacoesMoradia
+      .map(item => ({ value: item.value, label: item.label }))
+      .find(item => item.value === form.situacao_moradia) || null
 
   return (
     <>
@@ -236,28 +269,26 @@ export default function FamiliasAtingidasPage() {
         title="Famílias Atingidas"
         subtitle="Cadastro, consulta, edição e remoção de famílias impactadas."
       />
-	  
-	  <div className="page-card mb-4">
-		  <div className="d-flex justify-content-between align-items-center flex-wrap gap-3">
-			<div>
-			  <h2 className="h5 mb-1">Importação em lote</h2>
-			  <p className="text-muted mb-0">
-				Envie um arquivo Excel no template do módulo.
-			  </p>
-			</div>
 
-			<div className="d-flex gap-2 flex-wrap">
-			  <DownloadTemplateButton href="/templates/rede_import_template_fase1_limpo.xlsx" />
-			  <ImportExcelButton
-				endpoint="/api/familias-atingidas/import"
-				onImported={async () => {
-				  await loadItems()
-				}}
-			  />
-			</div>
-		  </div>
-	  </div>
-	  
+      <div className="page-card mb-4">
+        <div className="d-flex justify-content-between align-items-center flex-wrap gap-3">
+          <div>
+            <h2 className="h5 mb-1">Importação em lote</h2>
+            <p className="text-muted mb-0">Envie um arquivo Excel no template do módulo.</p>
+          </div>
+
+          <div className="d-flex gap-2 flex-wrap">
+            <DownloadTemplateButton href="/templates/rede_import_template_fase1_limpo.xlsx" />
+            <ImportExcelButton
+              endpoint="/api/familias-atingidas/import"
+              onImported={async () => {
+                await loadItems()
+              }}
+            />
+          </div>
+        </div>
+      </div>
+
       {message && (
         <div className={`alert ${Object.keys(errors).length ? 'alert-warning' : 'alert-info'}`}>
           {message}
@@ -268,6 +299,17 @@ export default function FamiliasAtingidasPage() {
         <h2 className="h5 mb-3">{editingId ? 'Editar família' : 'Nova família'}</h2>
 
         <form onSubmit={handleSubmit} className="row g-3">
+          <div className="col-md-4">
+            <label className="form-label">IHU</label>
+            <input
+              className="form-control bg-light text-muted"
+              value={form.ihu || ''}
+              readOnly
+              placeholder="Gerado automaticamente"
+            />
+            <div className="form-text">Campo exibido somente para leitura.</div>
+          </div>
+
           <div className="col-md-8">
             <label className="form-label">Nome do responsável</label>
             <input
@@ -393,37 +435,72 @@ export default function FamiliasAtingidasPage() {
 
           <div className="col-md-3">
             <label className="form-label">Crianças</label>
-            <input type="number" className="form-control" value={form.criancas} onChange={e => updateField('criancas', e.target.value)} />
+            <input
+              type="number"
+              className="form-control"
+              value={form.criancas}
+              onChange={e => updateField('criancas', e.target.value)}
+            />
           </div>
 
           <div className="col-md-3">
             <label className="form-label">Adolescentes</label>
-            <input type="number" className="form-control" value={form.adolescentes} onChange={e => updateField('adolescentes', e.target.value)} />
+            <input
+              type="number"
+              className="form-control"
+              value={form.adolescentes}
+              onChange={e => updateField('adolescentes', e.target.value)}
+            />
           </div>
 
           <div className="col-md-3">
             <label className="form-label">Adultos</label>
-            <input type="number" className="form-control" value={form.adultos} onChange={e => updateField('adultos', e.target.value)} />
+            <input
+              type="number"
+              className="form-control"
+              value={form.adultos}
+              onChange={e => updateField('adultos', e.target.value)}
+            />
           </div>
 
           <div className="col-md-3">
             <label className="form-label">Idosos</label>
-            <input type="number" className="form-control" value={form.idosos} onChange={e => updateField('idosos', e.target.value)} />
+            <input
+              type="number"
+              className="form-control"
+              value={form.idosos}
+              onChange={e => updateField('idosos', e.target.value)}
+            />
           </div>
 
           <div className="col-md-3">
             <label className="form-label">PCD</label>
-            <input type="number" className="form-control" value={form.pcd} onChange={e => updateField('pcd', e.target.value)} />
+            <input
+              type="number"
+              className="form-control"
+              value={form.pcd}
+              onChange={e => updateField('pcd', e.target.value)}
+            />
           </div>
 
           <div className="col-md-3">
             <label className="form-label">Gestantes</label>
-            <input type="number" className="form-control" value={form.gestantes} onChange={e => updateField('gestantes', e.target.value)} />
+            <input
+              type="number"
+              className="form-control"
+              value={form.gestantes}
+              onChange={e => updateField('gestantes', e.target.value)}
+            />
           </div>
 
           <div className="col-md-3">
             <label className="form-label">Bebês</label>
-            <input type="number" className="form-control" value={form.bebes} onChange={e => updateField('bebes', e.target.value)} />
+            <input
+              type="number"
+              className="form-control"
+              value={form.bebes}
+              onChange={e => updateField('bebes', e.target.value)}
+            />
           </div>
 
           <div className="col-md-6">
@@ -529,7 +606,13 @@ export default function FamiliasAtingidasPage() {
               onChange={e => setQuery(e.target.value)}
               style={{ minWidth: 280 }}
             />
-            <button className="btn btn-outline-primary" onClick={() => loadItems()}>
+            <button
+              className="btn btn-outline-primary"
+              onClick={() => {
+                setPage(1)
+                loadItems(query, 1)
+              }}
+            >
               Buscar
             </button>
           </div>
@@ -556,7 +639,10 @@ export default function FamiliasAtingidasPage() {
                   <td>{item.municipio}</td>
                   <td>{item.estado}</td>
                   <td>{item.total_moradores}</td>
-                  <td>{situacoesMoradia.find(x => x.value === item.situacao_moradia)?.label || item.situacao_moradia}</td>
+                  <td>
+                    {situacoesMoradia.find(x => x.value === item.situacao_moradia)?.label ||
+                      item.situacao_moradia}
+                  </td>
                   <td className="text-end">
                     <button
                       className="btn btn-sm btn-outline-secondary me-2"
@@ -583,6 +669,33 @@ export default function FamiliasAtingidasPage() {
               )}
             </tbody>
           </table>
+        </div>
+
+        <div className="d-flex justify-content-between align-items-center mt-3 gap-3 flex-wrap">
+          <span className="text-muted small">
+            {total > 0
+              ? `Mostrando pagina ${page} de ${totalPages} • ${total} registros`
+              : 'Nenhum registro para paginar'}
+          </span>
+
+          <div className="d-flex gap-2">
+            <button
+              type="button"
+              className="btn btn-outline-secondary btn-sm"
+              disabled={page <= 1}
+              onClick={() => loadItems(query, page - 1)}
+            >
+              Anterior
+            </button>
+            <button
+              type="button"
+              className="btn btn-outline-secondary btn-sm"
+              disabled={page >= totalPages}
+              onClick={() => loadItems(query, page + 1)}
+            >
+              Proxima
+            </button>
+          </div>
         </div>
       </div>
     </>

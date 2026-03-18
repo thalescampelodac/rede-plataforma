@@ -3,8 +3,12 @@ import { buildImportLogText, ImportLogRow } from '@/lib/import-log'
 import { parseExcelFile } from '@/lib/excel'
 import { getSupabaseAdmin } from '@/lib/supabase'
 import { validateFamilia } from '@/lib/validations'
+import { generateIHU, getLastIHUSequence } from '@/lib/ihu'
 
-function buildValidationDetail(errors: Record<string, string>, row: Record<string, any>) {
+function buildValidationDetail(
+  errors: Record<string, string>,
+  row: Record<string, any>
+) {
   const entries = Object.entries(errors)
 
   if (!entries.length) {
@@ -24,6 +28,21 @@ function buildValidationDetail(errors: Record<string, string>, row: Record<strin
     motivo_erro: motivo,
     acao_sugerida: `Corrigir o campo "${campo}" e reenviar a linha.`,
   }
+}
+
+function parseNecessidades(value: unknown): string[] {
+  if (Array.isArray(value)) {
+    return value.map(item => String(item).trim()).filter(Boolean)
+  }
+
+  return String(value || '')
+    .split(',')
+    .map(item => item.trim())
+    .filter(Boolean)
+}
+
+function buildSequenceKey(estado: string, municipio: string, ano: number) {
+  return `${estado.toUpperCase()}::${municipio.trim().toLowerCase()}::${ano}`
 }
 
 export async function POST(request: Request) {
@@ -64,12 +83,19 @@ export async function POST(request: Request) {
       'necessidades_prioritarias',
     ])
 
+    console.log('DEBUG IMPORT')
+    console.log('Sheet:', sheetName)
+    console.log('Rows:', rows.length)
+
     const supabase = getSupabaseAdmin()
     const validRows: any[] = []
     const logRows: ImportLogRow[] = []
+    const sequenceMap = new Map<string, number>()
+    const cpfSet = new Set<string>()
 
     if (!rows.length) {
       const txt = buildImportLogText({
+        motivo: `Nenhuma linha encontrada na aba "${sheetName}".`,
         modulo: 'Famílias Atingidas',
         aba: sheetName,
         totalLidas: 0,
@@ -125,10 +151,7 @@ export async function POST(request: Request) {
         renda_familiar_estimada: row.renda_familiar_estimada || '',
         ocupacao_responsavel: row.ocupacao_responsavel || '',
         perda_renda: row.perda_renda || false,
-        necessidades_prioritarias: String(row.necessidades_prioritarias || '')
-          .split(',')
-          .map((x) => x.trim())
-          .filter(Boolean),
+        necessidades_prioritarias: parseNecessidades(row.necessidades_prioritarias),
       })
 
       if (!parsed.valid) {
@@ -139,35 +162,110 @@ export async function POST(request: Request) {
           status: 'ERRO',
           ...detail,
         })
+
         continue
       }
 
-      const cpf = parsed.normalized.cpf
+      const normalized = parsed.normalized
+      const cpf = normalized.cpf
 
-      const { data: existing } = await supabase
+      if (cpfSet.has(cpf)) {
+        logRows.push({
+          linha_excel: i + 2,
+          status: 'ERRO',
+          campo_erro: 'cpf',
+          valor_recebido: String(row.cpf ?? ''),
+          motivo_erro: 'CPF duplicado dentro do próprio arquivo de importação.',
+          acao_sugerida: 'Remover a duplicidade no Excel e reenviar o arquivo.',
+        })
+
+        continue
+      }
+
+      const { data: existing, error: existingError } = await supabase
         .from('familias_atingidas')
         .select('id')
         .eq('cpf', cpf)
         .maybeSingle()
+
+      if (existingError) {
+        logRows.push({
+          linha_excel: i + 2,
+          status: 'ERRO',
+          campo_erro: 'cpf',
+          valor_recebido: String(row.cpf ?? ''),
+          motivo_erro: 'Erro ao verificar CPF existente na base.',
+          acao_sugerida: 'Tentar novamente ou revisar a conexão com o banco.',
+        })
+
+        continue
+      }
 
       if (existing) {
         logRows.push({
           linha_excel: i + 2,
           status: 'ERRO',
           campo_erro: 'cpf',
-          valor_recebido: String(row.cpf || ''),
+          valor_recebido: String(row.cpf ?? ''),
           motivo_erro: 'CPF já cadastrado no sistema.',
           acao_sugerida: 'Informar CPF diferente ou atualizar o cadastro existente.',
         })
+
         continue
       }
 
-      validRows.push(parsed.normalized)
+      try {
+        const estado = String(normalized.estado || '').trim().toUpperCase()
+        const municipio = String(normalized.municipio || '').trim()
+        const ano = new Date().getFullYear()
+        const sequenceKey = buildSequenceKey(estado, municipio, ano)
 
-      logRows.push({
-        linha_excel: i + 2,
-        status: 'IMPORTADO',
-      })
+        let nextSeq: number
+
+        if (sequenceMap.has(sequenceKey)) {
+          nextSeq = Number(sequenceMap.get(sequenceKey)) + 1
+        } else {
+          const lastSeq = await getLastIHUSequence({
+            supabase,
+            estado,
+            municipio,
+            ano,
+          })
+
+          nextSeq = lastSeq + 1
+        }
+
+        sequenceMap.set(sequenceKey, nextSeq)
+
+        const ihuData = await generateIHU({
+          supabase,
+          estado,
+          municipio,
+          ano,
+          sequencial: nextSeq,
+        })
+
+        validRows.push({
+          ...normalized,
+          ...ihuData,
+        })
+
+        cpfSet.add(cpf)
+
+        logRows.push({
+          linha_excel: i + 2,
+          status: 'IMPORTADO',
+        })
+      } catch (error: any) {
+        logRows.push({
+          linha_excel: i + 2,
+          status: 'ERRO',
+          campo_erro: 'ihu',
+          valor_recebido: String(row.ihu ?? ''),
+          motivo_erro: error?.message || 'Erro ao gerar IHU para a linha informada.',
+          acao_sugerida: 'Revisar estado e município da linha e tentar novamente.',
+        })
+      }
     }
 
     let imported = 0
@@ -177,6 +275,7 @@ export async function POST(request: Request) {
 
       if (error) {
         const txt = buildImportLogText({
+          motivo: error.message || 'Erro ao gravar registros válidos no banco de dados.',
           modulo: 'Famílias Atingidas',
           aba: sheetName,
           totalLidas: rows.length,
@@ -188,7 +287,7 @@ export async function POST(request: Request) {
               status: 'ERRO',
               campo_erro: '',
               valor_recebido: '',
-              motivo_erro: 'Erro ao gravar registros válidos no banco de dados.',
+              motivo_erro: error.message || 'Erro ao gravar registros válidos no banco de dados.',
               acao_sugerida: 'Verificar a integridade da base e tentar novamente.',
             },
           ],
@@ -208,9 +307,13 @@ export async function POST(request: Request) {
       imported = validRows.length
     }
 
-    const failed = logRows.filter((r) => r.status === 'ERRO').length
+    const failed = logRows.filter(row => row.status === 'ERRO').length
 
     const txt = buildImportLogText({
+      motivo:
+        failed > 0
+          ? 'Importação concluída com ocorrências.'
+          : 'Importação concluída com sucesso.',
       modulo: 'Famílias Atingidas',
       aba: sheetName,
       totalLidas: rows.length,
@@ -228,8 +331,11 @@ export async function POST(request: Request) {
         'X-Import-Failed': String(failed),
       },
     })
-  } catch {
+  } catch (error: any) {
+    const motivo = error?.message || 'Erro interno ao importar famílias.'
+
     const txt = buildImportLogText({
+      motivo,
       modulo: 'Famílias Atingidas',
       aba: 'familias_atingidas',
       totalLidas: 0,
@@ -241,7 +347,7 @@ export async function POST(request: Request) {
           status: 'ERRO',
           campo_erro: '',
           valor_recebido: '',
-          motivo_erro: 'Erro interno ao importar famílias.',
+          motivo_erro: motivo,
           acao_sugerida: 'Revisar logs do servidor.',
         },
       ],
