@@ -194,6 +194,18 @@ a {
 
 .sidebar-brand {
   margin-bottom: 24px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 10px;
+}
+
+.sidebar-brand-mark {
+  width: 132px;
+  max-width: 100%;
+  display: flex;
+  justify-content: center;
 }
 
 .sidebar-brand-title {

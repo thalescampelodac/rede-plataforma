@@ -1,5 +1,6 @@
 'use client'
 
+import Image from 'next/image'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { menuItems } from '@/lib/menu'
@@ -13,9 +14,18 @@ export default function Sidebar() {
   return (
     <aside className="sidebar">
       <div className="sidebar-brand">
+        <div className="sidebar-brand-mark">
+          <Image
+            src="/logo_rede.svg"
+            alt="Logo da plataforma REDE"
+            width={132}
+            height={132}
+            priority
+          />
+        </div>
         <div className="sidebar-brand-title">REDE</div>
         <div className="sidebar-brand-subtitle">
-          Plataforma Nacional de Coordenação Humanitária
+          Plataforma Nacional de Coordenacao Humanitaria
         </div>
       </div>
 
@@ -23,10 +33,10 @@ export default function Sidebar() {
         href="/app"
         className={`menu-link ${pathname === '/app' ? 'active' : ''}`}
       >
-        <span>Início do sistema</span>
+        <span>Inicio do sistema</span>
       </Link>
 
-      <div className="menu-section-title">Módulos funcionais</div>
+      <div className="menu-section-title">Modulos funcionais</div>
       {funcionais.map(item => (
         <Link
           key={item.href}
@@ -38,7 +48,7 @@ export default function Sidebar() {
         </Link>
       ))}
 
-      <div className="menu-section-title">Em construção</div>
+      <div className="menu-section-title">Em construcao</div>
       {construcao.map(item => (
         <Link
           key={item.href}
@@ -46,7 +56,7 @@ export default function Sidebar() {
           className={`menu-link ${pathname === item.href ? 'active' : ''}`}
         >
           <span>{item.label}</span>
-          <span className="badge-construction">Em construção</span>
+          <span className="badge-construction">Em construcao</span>
         </Link>
       ))}
     </aside>
